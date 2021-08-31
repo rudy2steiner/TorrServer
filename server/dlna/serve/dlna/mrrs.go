@@ -3,7 +3,7 @@ package dlna
 import (
 	"net/http"
 
-	"github.com/anacrolix/dms/upnp"
+	"server/dlna/serve/dlna/upnp"
 )
 
 type mediaReceiverRegistrarService struct {

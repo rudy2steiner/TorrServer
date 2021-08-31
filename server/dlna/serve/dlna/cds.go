@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/anacrolix/dms/upnp"
+	"server/dlna/serve/dlna/upnp"
 	"server/dlna/serve/dlna/upnpav"
 )
 

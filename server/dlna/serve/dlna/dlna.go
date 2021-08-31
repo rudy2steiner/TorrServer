@@ -13,11 +13,10 @@ import (
 	"strings"
 	"time"
 
-	dms_dlna "github.com/anacrolix/dms/dlna"
-	"github.com/anacrolix/dms/soap"
-	"github.com/anacrolix/dms/ssdp"
-	"github.com/anacrolix/dms/upnp"
 	"server/dlna/serve/dlna/data"
+	"server/dlna/serve/dlna/soap"
+	"server/dlna/serve/dlna/ssdp"
+	"server/dlna/serve/dlna/upnp"
 )
 
 const (
@@ -183,7 +182,7 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 
 	// add some DLNA specific headers
 	if r.Header.Get("getContentFeatures.dlna.org") != "" {
-		w.Header().Set("contentFeatures.dlna.org", dms_dlna.ContentFeatures{
+		w.Header().Set("contentFeatures.dlna.org", ContentFeatures{
 			SupportRange: true,
 		}.String())
 	}

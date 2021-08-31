@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anacrolix/dms/soap"
-	"github.com/anacrolix/dms/upnp"
+	"server/dlna/serve/dlna/soap"
+	"server/dlna/serve/dlna/upnp"
 )
 
 // Return a default "friendly name" for the server.
