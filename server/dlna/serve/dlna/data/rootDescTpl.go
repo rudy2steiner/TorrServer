@@ -1,4 +1,6 @@
-<?xml version="1.0"?>
+package data
+
+const rootDescTpl = `<?xml version="1.0"?>
 <root xmlns="urn:schemas-upnp-org:device-1-0"
       xmlns:dlna="urn:schemas-dlna-org:device-1-0"
       xmlns:sec="http://www.sec.co.kr/dlna">
@@ -9,12 +11,11 @@
   <device>
     <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
     <friendlyName>{{.FriendlyName}}</friendlyName>
-    <manufacturer>rclone (rclone.org)</manufacturer>
-    <manufacturerURL>https://rclone.org/</manufacturerURL>
-    <modelDescription>rclone</modelDescription>
-    <modelName>rclone</modelName>
+    <manufacturer>YouROK</manufacturer>
+    <manufacturerURL>https://github.com/YouROK/TorrServer</manufacturerURL>
+    <modelDescription>TorrServer - stream torrent to HTTP</modelDescription>
+    <modelName>TorrServer</modelName>
     <modelNumber>{{.ModelNumber}}</modelNumber>
-    <modelURL>https://rclone.org/</modelURL>
     <serialNumber>00000000</serialNumber>
     <UDN>{{.RootDeviceUUID}}</UDN>
     <dlna:X_DLNACAP/>
@@ -42,25 +43,24 @@
       <service>
         <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
         <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
-        <SCPDURL>/static/ContentDirectory.xml</SCPDURL>
+        <SCPDURL>/scpd/urn:upnp-org:serviceId:ContentDirectory</SCPDURL>
         <controlURL>/ctl</controlURL>
         <eventSubURL></eventSubURL>
       </service>
       <service>
         <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
         <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
-        <SCPDURL>/static/ConnectionManager.xml</SCPDURL>
+        <SCPDURL>/scpd/urn:upnp-org:serviceId:ConnectionManager</SCPDURL>
         <controlURL>/ctl</controlURL>
         <eventSubURL></eventSubURL>
       </service>
       <service>
         <serviceType>urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1</serviceType>
         <serviceId>urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</serviceId>
-        <SCPDURL>/static/X_MS_MediaReceiverRegistrar.xml</SCPDURL>
+        <SCPDURL>/scpd/urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</SCPDURL>
         <controlURL>/ctl</controlURL>
         <eventSubURL></eventSubURL>
       </service>
     </serviceList>
-    <presentationURL>/</presentationURL>
   </device>
-</root>
+</root>`

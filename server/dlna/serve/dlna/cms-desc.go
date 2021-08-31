@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
+package dlna
+
+const connectionManagerServiceDesc = `<?xml version="1.0" encoding="UTF-8"?>
 <scpd xmlns="urn:schemas-upnp-org:service-1-0">
 	<specVersion>
 		<major>1</major>
@@ -179,4 +181,4 @@
 			<dataType>i4</dataType>
 		</stateVariable>
 	</serviceStateTable>
-</scpd>
+</scpd>`

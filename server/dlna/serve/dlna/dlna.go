@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -48,6 +49,41 @@ type Server struct {
 	AnnounceInterval time.Duration
 }
 
+// Groups the service definition with its XML description.
+type service struct {
+	upnp.Service
+	SCPD string
+}
+
+var (
+	startTime time.Time
+)
+
+// Exposed UPnP AV services.
+var services = []*service{
+	{
+		Service: upnp.Service{
+			ServiceType: "urn:schemas-upnp-org:service:ContentDirectory:1",
+			ServiceId:   "urn:upnp-org:serviceId:ContentDirectory",
+		},
+		SCPD: contentDirectoryServiceDescription,
+	},
+	{
+	 	Service: upnp.Service{
+	 		ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
+	 		ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
+	 	},
+	 	SCPD: connectionManagerServiceDesc,
+	},
+	{
+	 	Service: upnp.Service{
+	 		ServiceType: "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1",
+	 		ServiceId:   "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar",
+	 	},
+	 	SCPD: mediaReceiverRegistrarDescription,
+	},
+}
+
 func NewServer() *Server {
 	friendlyName := makeDefaultFriendlyName()
 
@@ -84,6 +120,8 @@ func NewServer() *Server {
 		r.HandleFunc(rootDescPath, s.rootDescHandler)
 		r.HandleFunc(serviceControlURL, s.serviceControlHandler)
 	}
+	// Handle services desc
+	handleSCPDs(r)
 	r.Handle("/static/", http.StripPrefix("/static/",
 		withHeader("Cache-Control", "public, max-age=86400",
 			http.FileServer(data.Assets))))
@@ -104,7 +142,7 @@ func (s *Server) String() string {
 	return fmt.Sprintf("DLNA server on %v", s.httpListenAddr)
 }
 
-// Returns rclone version number as the model number.
+// Returns version number as the model number.
 func (s *Server) ModelNumber() string {
 	return version.Version
 }
@@ -131,6 +169,26 @@ func (s *Server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Network error
 		log.Printf("%v Error writing rootDesc: %v", s, err)
+	}
+}
+
+// Set the SCPD serve paths.
+func init() {
+	for _, s := range services {
+		p := path.Join("/scpd", s.ServiceId)
+		s.SCPDURL = p
+	}
+}
+
+// Install handlers to serve SCPD for each UPnP service.
+func handleSCPDs(mux *http.ServeMux) {
+	for _, s := range services {
+		mux.HandleFunc(s.SCPDURL, func(serviceDesc string) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("content-type", `text/xml; charset="utf-8"`)
+				http.ServeContent(w, r, ".xml", startTime, bytes.NewReader([]byte(serviceDesc)))
+			}
+		}(s.SCPD))
 	}
 }
 

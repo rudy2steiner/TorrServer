@@ -1,4 +1,6 @@
-<?xml version="1.0" ?>
+package dlna
+
+const mediaReceiverRegistrarDescription = `<?xml version="1.0" ?>
 <scpd xmlns="urn:schemas-upnp-org:service-1-0">
 	<specVersion>
 		<major>1</major>
@@ -85,4 +87,4 @@
 			<dataType>ui4</dataType>
 		</stateVariable>
 	</serviceStateTable>
-</scpd>
+</scpd>`

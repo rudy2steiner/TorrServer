@@ -1,4 +1,6 @@
-<?xml version="1.0"?>
+package dlna
+
+const contentDirectoryServiceDescription = `<?xml version="1.0"?>
 <scpd xmlns="urn:schemas-upnp-org:service-1-0">
 	<specVersion>
 		<major>1</major>
@@ -501,4 +503,4 @@
 			<defaultValue />
 		</stateVariable>
 	</serviceStateTable>
-</scpd>
+</scpd>`
