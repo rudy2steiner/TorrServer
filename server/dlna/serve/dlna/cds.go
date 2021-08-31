@@ -52,7 +52,7 @@ func init() {
 }
 
 type contentDirectoryService struct {
-	*server
+	*Server
 	upnp.Eventing
 }
 

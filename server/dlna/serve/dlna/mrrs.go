@@ -7,7 +7,7 @@ import (
 )
 
 type mediaReceiverRegistrarService struct {
-	*server
+	*Server
 	upnp.Eventing
 }
 

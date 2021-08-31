@@ -27,7 +27,7 @@ const (
 	serviceControlURL = "/ctl"
 )
 
-type server struct {
+type Server struct {
 	// The service SOAP handler keyed by service URN.
 	services map[string]UPnPService
 
@@ -48,10 +48,10 @@ type server struct {
 	AnnounceInterval time.Duration
 }
 
-func newServer() *server {
+func NewServer() *Server {
 	friendlyName := makeDefaultFriendlyName()
 
-	s := &server{
+	s := &Server{
 		AnnounceInterval: 10 * time.Second,
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
@@ -62,13 +62,13 @@ func newServer() *server {
 
 	s.services = map[string]UPnPService{
 		"ContentDirectory": &contentDirectoryService{
-			server: s,
+			Server: s,
 		},
 		"ConnectionManager": &connectionManagerService{
-			server: s,
+			Server: s,
 		},
 		"X_MS_MediaReceiverRegistrar": &mediaReceiverRegistrarService{
-			server: s,
+			Server: s,
 		},
 	}
 
@@ -76,7 +76,8 @@ func newServer() *server {
 	r := http.NewServeMux()
 	r.Handle(resPath, http.StripPrefix(resPath,
 		http.HandlerFunc(s.resourceHandler)))
-	if true {
+	//TODO change logger
+	if false {
 		r.Handle(rootDescPath, traceLogging(http.HandlerFunc(s.rootDescHandler)))
 		r.Handle(serviceControlURL, traceLogging(http.HandlerFunc(s.serviceControlHandler)))
 	} else {
@@ -99,17 +100,17 @@ type UPnPService interface {
 }
 
 // Formats the server as a string (used for logging.)
-func (s *server) String() string {
+func (s *Server) String() string {
 	return fmt.Sprintf("DLNA server on %v", s.httpListenAddr)
 }
 
 // Returns rclone version number as the model number.
-func (s *server) ModelNumber() string {
+func (s *Server) ModelNumber() string {
 	return version.Version
 }
 
 // Renders the root device descriptor.
-func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := data.GetTemplate()
 	if err != nil {
 		serveError(s, w, "Failed to load root descriptor template", err)
@@ -134,7 +135,7 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handle a service control HTTP request.
-func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
 	soapAction, err := parseActionHTTPHeader(soapActionString)
 	if err != nil {
@@ -166,7 +167,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handle a SOAP request and return the response arguments or UPnP error.
-func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) (map[string]string, error) {
+func (s *Server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) (map[string]string, error) {
 	service, ok := s.services[sa.Type]
 	if !ok {
 		// TODO: What's the invalid service error?
@@ -176,7 +177,7 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 }
 
 // Serves actual resources (media files).
-func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	remotePath := r.URL.Path
 	node, err := os.Stat(r.URL.Path)
 	if err != nil {
@@ -205,7 +206,7 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 // Serve runs the server - returns the error only if
 // the listener was not started; does not block, so
 // use s.Wait() to block on the listener indefinitely.
-func (s *server) Serve() (err error) {
+func (s *Server) Serve() (err error) {
 	if s.HTTPConn == nil {
 		s.HTTPConn, err = net.Listen("tcp", s.httpListenAddr)
 		if err != nil {
@@ -230,11 +231,11 @@ func (s *server) Serve() (err error) {
 }
 
 // Wait blocks while the listener is open.
-func (s *server) Wait() {
+func (s *Server) Wait() {
 	<-s.waitChan
 }
 
-func (s *server) Close() {
+func (s *Server) Close() {
 	err := s.HTTPConn.Close()
 	if err != nil {
 		log.Printf("Error closing HTTP server: %v", err)
@@ -244,7 +245,7 @@ func (s *server) Close() {
 }
 
 // Run SSDP (multicast for server discovery) on all interfaces.
-func (s *server) startSSDP() {
+func (s *Server) startSSDP() {
 	active := 0
 	stopped := make(chan struct{})
 	for _, intf := range s.Interfaces {
@@ -263,7 +264,7 @@ func (s *server) startSSDP() {
 }
 
 // Run SSDP server on an interface.
-func (s *server) ssdpInterface(intf net.Interface) {
+func (s *Server) ssdpInterface(intf net.Interface) {
 	// Figure out which HTTP location to advertise based on the interface IP.
 	advertiseLocationFn := func(ip net.IP) string {
 		url := url.URL{
@@ -326,7 +327,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 	}
 }
 
-func (s *server) serveHTTP() error {
+func (s *Server) serveHTTP() error {
 	srv := &http.Server{
 		Handler: s.handler,
 	}
