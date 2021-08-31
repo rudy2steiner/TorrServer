@@ -15,7 +15,6 @@ func Start() {
 	if err := dlnaServer.Serve(); err != nil {
 		log.Println(err)
 	}
-	dlnaServer.Wait()
 }
 
 func Stop() {
