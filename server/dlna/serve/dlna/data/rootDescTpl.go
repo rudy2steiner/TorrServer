@@ -29,14 +29,14 @@ const rootDescTpl = `<?xml version="1.0"?>
         <width>48</width>
         <height>48</height>
         <depth>8</depth>
-        <url>/static/rclone-48x48.png</url>
+        <url>/static/ts-48x48.png</url>
       </icon>
       <icon>
         <mimetype>image/png</mimetype>
         <width>120</width>
         <height>120</height>
         <depth>8</depth>
-        <url>/static/rclone-120x120.png</url>
+        <url>/static/ts-120x120.png</url>
       </icon>
     </iconList>
     <serviceList>
