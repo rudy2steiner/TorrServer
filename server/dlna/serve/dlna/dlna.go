@@ -17,6 +17,7 @@ import (
 	"server/dlna/serve/dlna/soap"
 	"server/dlna/serve/dlna/ssdp"
 	"server/dlna/serve/dlna/upnp"
+	"server/version"
 )
 
 const (
@@ -100,6 +101,11 @@ type UPnPService interface {
 // Formats the server as a string (used for logging.)
 func (s *server) String() string {
 	return fmt.Sprintf("DLNA server on %v", s.httpListenAddr)
+}
+
+// Returns rclone version number as the model number.
+func (s *server) ModelNumber() string {
+	return version.Version
 }
 
 // Renders the root device descriptor.
