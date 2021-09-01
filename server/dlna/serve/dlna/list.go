@@ -8,10 +8,6 @@ import (
 	"strings"
 	"time"
 
-//	"github.com/anacrolix/dms/dlna"
-//	"github.com/anacrolix/dms/dlna/dms"
-//	"github.com/anacrolix/dms/upnpav"
-
 	"server/dlna/serve/dlna/upnpav"
 	"server/log"
 	"server/settings"
@@ -23,37 +19,35 @@ import (
 func getTorrents() (ret []interface{}) {
 	torrs := torr.ListTorrent()
 	col := 0
-	vol := 1
 	for _, t := range torrs {
 		col++
 		obj := upnpav.Object{
 			ID:          "%2F" + t.TorrentSpec.InfoHash.HexString(),
-			Restricted:  1,
 			ParentID:    "0",
-			Class:       "object.container.storageFolder",
 			Title:       t.Title,
+			Class:       "object.container.storageFolder",
+			Restricted:  1,
+			Searchable:  1,
 			Icon:        t.Poster,
 			AlbumArtURI: t.Poster,
+			Date: upnpav.Timestamp{Time: time.Now()},
 		}
 		cnt := upnpav.Container{
 			Object: obj,
-			ChildCount: &vol,
 		}
 		ret = append(ret, cnt)
 	}
 	// if no torrents found
-	parent := "0"
 	if col == 0 {
 		obj := upnpav.Object{
-			ID:         parent + "%2FNo Torrents",
-			Restricted: 1,
-			ParentID:   parent,
-			Class:      "object.container.storageFolder",
+			ID:         "%2FNo Torrents",
+			ParentID:   "0",
 			Title:      "No Torrents",
+			Class:      "object.container.storageFolder",
+			Restricted: 1,
 		}
 		cnt := upnpav.Container{
 			Object: obj,
-			ChildCount: &vol,
 		}
 		ret = append(ret, cnt)
 	}
@@ -80,15 +74,13 @@ func getTorrent(path, host string) (ret []interface{}) {
 	if torr.Files() == nil {
 		obj := upnpav.Object{
 			ID:         parent + "%2FLoad Torrent",
-			Restricted: 1,
 			ParentID:   parent,
-			Class:      "object.container.storageFolder",
 			Title:      "Load Torrent",
+			Class:      "object.container.storageFolder",
+			Restricted: 1,
 		}
-		vol := 1
 		cnt := upnpav.Container{
 			Object: obj,
-			ChildCount: &vol,
 		}
 		ret = append(ret, cnt)
 		return
@@ -165,10 +157,10 @@ func getObjFromTorrent(path, parent, host string, torr *torr.Torrent, file *stat
 
 	obj := upnpav.Object{
 		ID:         parent + "%2F" + file.Path,
-		Restricted: 1,
 		ParentID:   parent,
-		Class:      "object.item." + mime.Type() + "Item",
 		Title:      file.Path,
+		Class:      "object.item." + mime.Type() + "Item",
+		Restricted: 1,
 	}
 
 	item := upnpav.Item{
