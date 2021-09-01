@@ -26,6 +26,33 @@ func makeDefaultFriendlyName() string {
 	if err != nil {
 		hostName = ""
 	} else {
+		if hostName == "localhost" { // useless host, use 1st IP
+			ifaces, err := net.Interfaces()
+			if err != nil {
+				return "TorrServer" + " (" + hostName + ")"
+			}
+			var list []string
+			for _, i := range ifaces {
+				addrs, _ := i.Addrs()
+				if i.Flags&net.FlagUp == net.FlagUp {
+					for _, addr := range addrs {
+						var ip net.IP
+						switch v := addr.(type) {
+						case *net.IPNet:
+							ip = v.IP
+						case *net.IPAddr:
+							ip = v.IP
+						}
+						if !ip.IsLoopback() {
+							list = append(list, ip.String())
+						}
+					}
+				}
+			}
+			if len(list) > 0 {
+				hostName = list[0]
+			}
+		}
 		hostName = " (" + hostName + ")"
 	}
 	return "TorrServer" + hostName
