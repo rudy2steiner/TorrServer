@@ -69,11 +69,11 @@ var services = []*service{
 		SCPD: contentDirectoryServiceDescription,
 	},
 	{
-	 	Service: upnp.Service{
-	 		ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
-	 		ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
-	 	},
-	 	SCPD: connectionManagerServiceDesc,
+		Service: upnp.Service{
+			ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
+			ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
+		},
+		SCPD: connectionManagerServiceDesc,
 	},
 	{
 	 	Service: upnp.Service{
@@ -131,14 +131,6 @@ func NewServer() *Server {
 	s.handler = logging(withHeader("Server", serverField, r))
 
 	return s
-}
-
-func redirectHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Connection", "close")
-	u := r.URL
-	u.Host = r.Host
-	u.Scheme = "https"
-	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
