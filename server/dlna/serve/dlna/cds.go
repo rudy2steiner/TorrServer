@@ -144,7 +144,6 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 func (cds *contentDirectoryService) readContainer(o object, host string) (ret []interface{}, err error) {
 
 	path := o.Path
-	//log.Printf("readContainer path %s", path)
 	if path == "/" {
 		ret = getTorrents()
 		return
