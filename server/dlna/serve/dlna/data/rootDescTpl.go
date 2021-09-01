@@ -62,5 +62,6 @@ const rootDescTpl = `<?xml version="1.0"?>
         <eventSubURL></eventSubURL>
       </service>
     </serviceList>
+    <presentationURL>/</presentationURL>
   </device>
 </root>`

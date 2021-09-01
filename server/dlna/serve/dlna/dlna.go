@@ -120,14 +120,41 @@ func NewServer() *Server {
 		r.HandleFunc(rootDescPath, s.rootDescHandler)
 		r.HandleFunc(serviceControlURL, s.serviceControlHandler)
 	}
-	// Handle services desc
+	// Handle desc
 	handleSCPDs(r)
+	// Handle static
 	r.Handle("/static/", http.StripPrefix("/static/",
 		withHeader("Cache-Control", "public, max-age=86400",
 			http.FileServer(data.Assets))))
+	// Handle root (presentationURL)
+	r.HandleFunc("/", indexHandler)
 	s.handler = logging(withHeader("Server", serverField, r))
 
 	return s
+}
+
+func redirectHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Connection", "close")
+	u := r.URL
+	u.Host = r.Host
+	u.Scheme = "https"
+	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+  if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+  }
+	host, _, err := net.SplitHostPort(r.Host)
+	newp := "8090"
+	if err == nil {
+		w.Header().Set("Connection", "close")  
+		u := r.URL  
+		u.Host = host + ":" + newp
+		u.Scheme = "http"  
+		http.Redirect(w, r, u.String(), http.StatusFound)
+	}
 }
 
 // UPnPService is the interface for the SOAP service.
