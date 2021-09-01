@@ -65,7 +65,8 @@ var mediaMimeTypeRegexp = regexp.MustCompile("^(video|audio|image)/")
 // Turns the given entry and DMS host into a UPnP object. A nil object is
 // returned if the entry is not of interest.
 func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo os.FileInfo, resources []os.FileInfo, host string) (ret interface{}, err error) {
-	/*obj := upnpav.Object{
+	/*
+	obj := upnpav.Object{
 		ID:         cdsObject.ID(),
 		Restricted: 1,
 		ParentID:   cdsObject.ParentID(),
@@ -100,7 +101,9 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	obj.Class = "object.item." + mediaType[1] + "Item"
-	obj.Title = fileInfo.Name()
+	if obj.Title == "" {
+		obj.Title = fileInfo.Name()
+	}
 	obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 
 	item := upnpav.Item{
@@ -114,7 +117,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 			Host:   host,
 			Path:   path.Join(resPath, cdsObject.Path),
 		}).String(),
-		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mimeType, dlna.ContentFeatures{
+		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mimeType, ContentFeatures{
 			SupportRange: true,
 		}.String()),
 		Size: uint64(fileInfo.Size()),
@@ -139,7 +142,21 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 
 // Returns all the upnpav objects in a directory.
 func (cds *contentDirectoryService) readContainer(o object, host string) (ret []interface{}, err error) {
-	/*node, err := cds.vfs.Stat(o.Path)
+
+	path := o.Path
+	//log.Printf("readContainer path %s", path)
+	if path == "/" {
+		ret = getTorrents()
+		return
+	} else if isHashPath(path) {
+		ret = getTorrent(path, host)
+		return
+	} else if filepath.Base(path) == "Load Torrent" {
+		ret = loadTorrent(path, host)
+	}
+
+	/*
+	node, err := cds.vfs.Stat(o.Path)
 	if err != nil {
 		return
 	}
@@ -270,51 +287,55 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
 		}
 		switch browse.BrowseFlag {
-		case "BrowseDirectChildren":
-			objs, err := cds.readContainer(obj, host)
-			if err != nil {
-				return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
-			}
-			totalMatches := len(objs)
-			objs = objs[func() (low int) {
-				low = browse.StartingIndex
-				if low > len(objs) {
-					low = len(objs)
+			case "BrowseDirectChildren":
+				objs, err := cds.readContainer(obj, host)
+				if err != nil {
+					return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
 				}
-				return
-			}():]
-			if browse.RequestedCount != 0 && browse.RequestedCount < len(objs) {
-				objs = objs[:browse.RequestedCount]
-			}
-			result, err := xml.Marshal(objs)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{
-				"TotalMatches":   fmt.Sprint(totalMatches),
-				"NumberReturned": fmt.Sprint(len(objs)),
-				"Result":         didlLite(string(result)),
-				"UpdateID":       cds.updateIDString(),
-			}, nil
-		/*case "BrowseMetadata":
-		node, err := cds.vfs.Stat(obj.Path)
-		if err != nil {
-			return nil, err
-		}
-		// TODO: External subtitles won't appear in the metadata here, but probably should.
-		upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, vfs.Nodes{}, host)
-		if err != nil {
-			return nil, err
-		}
-		result, err := xml.Marshal(upnpObject)
-		if err != nil {
-			return nil, err
-		}
-		return map[string]string{
-			"Result": didlLite(string(result)),
-		}, nil*/
-		default:
-			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
+				totalMatches := len(objs)
+				objs = objs[func() (low int) {
+					low = browse.StartingIndex
+					if low > len(objs) {
+						low = len(objs)
+					}
+					return
+				}():]
+				if browse.RequestedCount != 0 && browse.RequestedCount < len(objs) {
+					objs = objs[:browse.RequestedCount]
+				}
+				result, err := xml.Marshal(objs)
+				if err != nil {
+					return nil, err
+				}
+				return map[string]string{
+					"TotalMatches":   fmt.Sprint(totalMatches),
+					"NumberReturned": fmt.Sprint(len(objs)),
+					"Result":         didlLite(string(result)),
+					"UpdateID":       cds.updateIDString(),
+				}, nil
+
+			/*
+			case "BrowseMetadata":
+				node, err := cds.vfs.Stat(obj.Path)
+				if err != nil {
+					return nil, err
+				}
+				// TODO: External subtitles won't appear in the metadata here, but probably should.
+				upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, vfs.Nodes{}, host)
+
+				if err != nil {
+					return nil, err
+				}
+				result, err := xml.Marshal(upnpObject)
+				if err != nil {
+					return nil, err
+				}
+				return map[string]string{
+					"Result": didlLite(string(result)),
+				}, nil
+			*/
+			default:
+				return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
 		}
 	case "GetSearchCapabilities":
 		return map[string]string{
@@ -341,6 +362,19 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 // Represents a ContentDirectory object.
 type object struct {
 	Path string // The cleaned, absolute path for the object relative to the server.
+}
+
+// Returns the number of children this object has, such as for a container.
+func (cds *contentDirectoryService) objectChildCount(me object) int {
+	objs, err := cds.readContainer(me, "")
+	if err != nil {
+		log.Printf("error reading container: %s", err)
+	}
+	return len(objs)
+}
+
+func (cds *contentDirectoryService) objectHasChildren(obj object) bool {
+	return cds.objectChildCount(obj) != 0
 }
 
 // Returns the actual local filesystem path for the object.

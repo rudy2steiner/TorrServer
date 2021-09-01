@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anacrolix/dms/dlna"
-	"github.com/anacrolix/dms/dlna/dms"
-	"github.com/anacrolix/dms/upnpav"
+//	"github.com/anacrolix/dms/dlna"
+//	"github.com/anacrolix/dms/dlna/dms"
+//	"github.com/anacrolix/dms/upnpav"
 
+	"server/dlna/serve/dlna/upnpav"
 	"server/log"
 	"server/settings"
 	"server/torr"
@@ -21,7 +22,10 @@ import (
 
 func getTorrents() (ret []interface{}) {
 	torrs := torr.ListTorrent()
+	col := 0
+	vol := 1
 	for _, t := range torrs {
+		col++
 		obj := upnpav.Object{
 			ID:          "%2F" + t.TorrentSpec.InfoHash.HexString(),
 			Restricted:  1,
@@ -31,7 +35,26 @@ func getTorrents() (ret []interface{}) {
 			Icon:        t.Poster,
 			AlbumArtURI: t.Poster,
 		}
-		cnt := upnpav.Container{Object: obj}
+		cnt := upnpav.Container{
+			Object: obj,
+			ChildCount: &vol,
+		}
+		ret = append(ret, cnt)
+	}
+	// if no torrents found
+	parent := "0"
+	if col == 0 {
+		obj := upnpav.Object{
+			ID:         parent + "%2FNo Torrents",
+			Restricted: 1,
+			ParentID:   parent,
+			Class:      "object.container.storageFolder",
+			Title:      "No Torrents",
+		}
+		cnt := upnpav.Container{
+			Object: obj,
+			ChildCount: &vol,
+		}
 		ret = append(ret, cnt)
 	}
 	return
@@ -62,7 +85,11 @@ func getTorrent(path, host string) (ret []interface{}) {
 			Class:      "object.container.storageFolder",
 			Title:      "Load Torrent",
 		}
-		cnt := upnpav.Container{Object: obj}
+		vol := 1
+		cnt := upnpav.Container{
+			Object: obj,
+			ChildCount: &vol,
+		}
 		ret = append(ret, cnt)
 		return
 	}
@@ -126,7 +153,7 @@ func getObjFromTorrent(path, parent, host string, torr *torr.Torrent, file *stat
 	if utils.GetMimeType(file.Path) == "*/*" {
 		return
 	}
-	mime, err := dms.MimeTypeByPath(file.Path)
+	mime, err := MimeTypeByPath(file.Path)
 	if err != nil {
 		//return // this always err
 		if utils.GetMimeType(file.Path) == "video/*" {
@@ -151,7 +178,7 @@ func getObjFromTorrent(path, parent, host string, torr *torr.Torrent, file *stat
 	pathPlay := "stream/" + url.PathEscape(file.Path) + "?link=" + torr.TorrentSpec.InfoHash.HexString() + "&play&index=" + strconv.Itoa(file.Id)
 	item.Res = append(item.Res, upnpav.Resource{
 		URL: getLink(host, pathPlay),
-		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mime, dlna.ContentFeatures{
+		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mime, ContentFeatures{
 			SupportRange: true,
 		}.String()),
 		Size: uint64(file.Length),
