@@ -1,6 +1,11 @@
 ## TorrServer
 TorrServer, stream torrent to http
-
+##  Build and Run on local
+``` 
+ cd server 
+ go build -o tor ./cmd 
+ ./tor
+```
 ### Installation
 Just download server from releases and exec file\
 https://github.com/YouROK/TorrServer/releases \
