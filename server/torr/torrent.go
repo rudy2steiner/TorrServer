@@ -148,6 +148,20 @@ func (t *Torrent) watch() {
 	}
 }
 
+func (t *Torrent) Watch() {
+	t.progressTicker = time.NewTicker(time.Second)
+	defer t.progressTicker.Stop()
+
+	for {
+		select {
+		case <-t.progressTicker.C:
+			go t.progressEvent()
+		case <-t.closed:
+			return
+		}
+	}
+}
+
 func (t *Torrent) progressEvent() {
 	if t.expired() {
 		if t.TorrentSpec != nil {

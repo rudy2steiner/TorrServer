@@ -4,8 +4,27 @@ TorrServer, stream torrent to http
 ``` 
  cd server 
  go build -o tor ./cmd 
- ./tor
+ ./tor -torrentsdir bt
 ```
+### magnet 
+```
+magnet:?xt=urn:btih:66TP5UGBAEBUW2OOT3LJQUSH56BVUG7O&dn=%E9%BE%99%E4%B9%8B%E5%AE%B6%E6%97%8F.House.of.the.Dragon.S01E02&tr=DHT%20Network&tr=DHT%20IPv6%20Network&xl=801884287
+
+go run ./test/download1/magdownload.go magnet:?xt=urn:btih:66TP5UGBAEBUW2OOT3LJQUSH56BVUG7O
+
+```
+### Debug 
+```
+go run ./test/parse /Users/rudy/Documents/bt
+dlv debug ./test/parse  -- /Users/rudy/Documents/bt
+
+```
+#### set break point
+``` 
+b main.main
+b link.ParseLink
+```
+
 ### Installation
 Just download server from releases and exec file\
 https://github.com/YouROK/TorrServer/releases \
